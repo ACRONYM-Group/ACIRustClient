@@ -19,10 +19,10 @@ use super::listener::listener;
 #[derive(Debug)]
 pub struct Connection
 {
-    pub sink: Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>,
-    pub open_requests: Arc<CHashMap<usize, tokio::sync::oneshot::Sender<Value>>>,
-    pub unique_id: std::sync::atomic::AtomicUsize,
-    pub event_id: std::sync::atomic::AtomicUsize
+    sink: Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>,
+    open_requests: Arc<CHashMap<usize, tokio::sync::oneshot::Sender<Value>>>,
+    unique_id: std::sync::atomic::AtomicUsize,
+    event_id: std::sync::atomic::AtomicUsize
 }
 
 impl Connection
@@ -515,7 +515,7 @@ impl Connection
 }
 
 /// Connect to an ACI server at the given ip and port
-pub async fn connect(ip: &str, port: usize) -> Result<(Connection, impl std::future::Future<Output=()>), ACIError>
+pub async fn connect(ip: &str, port: usize) -> Result<(Connection, impl std::future::Future<Output=()>, tokio::sync::mpsc::Receiver<super::event::ACIEvent>), ACIError>
 {
     let url_str = format!("ws://{}:{}", ip, port);
     let url = match url::Url::parse(&url_str)
@@ -529,9 +529,11 @@ pub async fn connect(ip: &str, port: usize) -> Result<(Connection, impl std::fut
     let (stream, _) = connect_async(url).await.expect("Unable to connect");
 
     let (sink, stream) = stream.split();
+
+    let (event_tx, event_rx) = tokio::sync::mpsc::channel(2);
     
     let open_requests = Arc::new(CHashMap::new());
     let conn = Connection::new(sink, open_requests.clone());
 
-    Ok((conn, listener(stream, open_requests)))
+    Ok((conn, listener(stream, open_requests, event_tx), event_rx))
 }
