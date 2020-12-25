@@ -526,7 +526,8 @@ pub async fn connect(ip: &str, port: usize) -> Result<(Connection, impl std::fut
             return Err(ACIError::ClientError(ACIClientError::new(format!("Cannot create url for `{}` {}", url_str, e))))
         }
     };
-    let (stream, _) = connect_async(url).await.expect("Unable to connect");
+    let (stream, _) = connect_async(url).await.map_err(
+        |e| ACIError::ClientError(format!("Unable to connect to `{}:{}`", ip, port)))?;
 
     let (sink, stream) = stream.split();
 
