@@ -247,7 +247,7 @@ impl Connection
     /// Get a vector of database keys loaded on the server
     pub async fn list_databases(&self) -> Result<Vec<String>, ACIError>
     {
-        let resp = self.send_packet(json!({"cmd": "list_keys"})).await?;
+        let resp = self.send_packet(json!({"cmd": "list_databases"})).await?;
 
         if let Value::Object(obj) = &resp
         {
