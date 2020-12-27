@@ -445,7 +445,7 @@ impl Connection
     /// Get the last n values (or the entirety) of an array stored in a key on the server  
     pub async fn get_recent(&self, db_key: &str, key: &str, n: usize) -> Result<Value, ACIError>
     {
-        let resp = self.send_packet(json!({"cmd": "get_index", "db_key": db_key, "key": key, "num": n})).await?;
+        let resp = self.send_packet(json!({"cmd": "get_recent", "db_key": db_key, "key": key, "num": n})).await?;
 
         if let Value::Object(obj) = &resp
         {
